@@ -1,0 +1,51 @@
+/* src/app/results/styles.css */
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+input {
+  width: 90%;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  margin: 5px;
+  padding: 10px;
+  background-color: #0070f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 150px;
+}
+
+button:hover {
+  background-color: #005bb5;
+}
+
+button.selected {
+  background-color: #005bb5; /* Seçili buton rengi */
+}
+
+.result {
+  margin-top: 20px;
+  font-weight: bold;
+  text-align: left;
+}
+
+.logout-container {
+  margin-top: 20px;
+}
