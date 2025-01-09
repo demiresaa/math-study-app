@@ -62,6 +62,7 @@ export default function Login() {
         onChange={(e) => setPassword(e.target.value)}
       />
       <button onClick={handleLogin}>Giriş Yap</button>
+      <button onClick={handleLogin}>Veli Girişi</button>
       <p>
         Henüz kaydolmadınız mı? <a href="/register">Kayıt Ol</a>
       </p>

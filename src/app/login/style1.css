@@ -43,6 +43,7 @@ button {
   cursor: pointer;
   transition: background-color 0.3s ease;
   font-size: 1rem;
+  margin-top: 10px;
 }
 
 button:hover {
