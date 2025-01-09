@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "../../../supabase/supabaseClient";
 import { useRouter } from "next/navigation";
 import "./styles.css";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const tytTopics = [
   "Temel Kavramlar",
@@ -148,12 +150,13 @@ export default function Results() {
         : `Hafta İçi Çalışma Programı:\n\n19.00 - 22.00 Arası Günlük Çalışma Programı:\nToplam 3 Saat Çalışma Olacak:\n- 45 Dakika Çalışma × 3\n- 15 Dakika Mola × 3`
     }\n\nÇalışma Planı:\n${studyPlan}`;
 
-    const element = document.createElement("a");
-    const file = new Blob([combinedText], { type: "text/plain" });
-    element.href = URL.createObjectURL(file);
-    element.download = "calisma_programi.txt";
-    document.body.appendChild(element);
-    element.click();
+    // PDF oluşturma işlemi
+    const pdf = new jsPDF();
+    pdf.setFont("times", "normal"); // Yazı tipini Times New Roman olarak ayarlama
+    pdf.setFontSize(10); // Yazı boyutunu 10 olarak ayarlama
+    const splitText = pdf.splitTextToSize(combinedText, 190); // Metni 190 piksel genişliğine göre böl
+    pdf.text(splitText, 10, 10, { lineHeightFactor: 1.5 }); // Satır aralığını artır
+    pdf.save("calisma_programi.pdf");
   };
 
   return (

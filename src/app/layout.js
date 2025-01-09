@@ -1,15 +1,23 @@
 // src/app/layout.js
-import Link from "next/link";
-
+import "./page.module.css";
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <title>Yapay Zeka Destekli Çalışma Programı Oluşturma</title>
+        <title>Koçum Benim</title>
       </head>
       <body>
         <nav>
-          <h1>Yapay Zeka Destekli Çalışma Programı Oluşturma</h1>
+          <img
+            src="/resim.jpg"
+            className="resim"
+            style={{
+              width: "200px",
+              height: "200px",
+              borderRadius: "100px",
+              marginBottom: "-150px",
+            }}
+          />
         </nav>
         {children}
       </body>
