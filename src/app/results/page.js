@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../../supabase/supabaseClient";
 import { useRouter } from "next/navigation";
-import "./styles.css"; // CSS dosyasını içe aktar
+import "./styles.css";
 
 const tytTopics = [
   "Temel Kavramlar",
@@ -20,16 +20,6 @@ const tytTopics = [
   "Oran Orantı",
   "Denklem Çözme",
   "Problemler",
-  "Sayı Problemleri",
-  "Kesir Problemleri",
-  "Yaş Problemleri",
-  "Hareket Hız Problemleri",
-  "İşçi Emek Problemleri",
-  "Yüzde Problemleri",
-  "Kar Zarar Problemleri",
-  "Karışım Problemleri",
-  "Grafik Problemleri",
-  "Rutin Olmayan Problemleri",
   "Kümeler – Kartezyen Çarpım",
   "Mantık",
   "Fonksiyonlar",
@@ -53,9 +43,7 @@ const aytTopics = [
   "Çarpanlara Ayırma",
   "Oran Orantı",
   "Denklem Çözme",
-  "Problemler",
   "Kümeler",
-  "Kartezyen Çarpım",
   "Mantık",
   "Fonksiyonlar",
   "Polinomlar",
@@ -64,7 +52,6 @@ const aytTopics = [
   "Binom ve Olasılık",
   "İstatistik",
   "Karmaşık Sayılar",
-  "2.Dereceden Eşitsizlikler",
   "Parabol",
   "Trigonometri",
   "Logaritma",
@@ -73,137 +60,196 @@ const aytTopics = [
   "Türev",
   "İntegral",
 ];
+
 export default function Results() {
-  const [correctAnswers, setCorrectAnswers] = useState(""); // Başlangıçta boş string
-  const [wrongAnswers, setWrongAnswers] = useState(""); // Başlangıçta boş string
-  const [ratio, setRatio] = useState(null);
+  const [correctAnswers, setCorrectAnswers] = useState({});
+  const [wrongAnswers, setWrongAnswers] = useState({});
+  const [emptyAnswers, setEmptyAnswers] = useState({});
   const [studyPlan, setStudyPlan] = useState("");
-  const [selectedTopics, setSelectedTopics] = useState([]);
-  const [selectedType, setSelectedType] = useState(null); // Seçilen tür (TYT veya AYT)
-  const router = useRouter(); // Router kullanımı
+  const [selectedType, setSelectedType] = useState(null);
+  const [showStudyTime, setShowStudyTime] = useState(false);
+  const [studySchedule, setStudySchedule] = useState("");
+
+  const router = useRouter();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/login"); // Giriş sayfasına yönlendir
+    router.push("/login");
   };
 
   useEffect(() => {
     const checkUser = async () => {
       const {
         data: { user },
-        error,
       } = await supabase.auth.getUser();
       if (!user) {
-        router.push("/login"); // Kullanıcı giriş yapmamışsa giriş sayfasına yönlendir
+        router.push("/login");
       }
     };
 
     checkUser();
   }, [router]);
 
-  const calculateRatio = () => {
-    const totalAnswers = Number(correctAnswers) + Number(wrongAnswers);
-    if (totalAnswers === 0) {
-      alert("Lütfen doğru ve yanlış sayısını girin.");
-      return;
-    }
-    const calculatedRatio = (Number(correctAnswers) / totalAnswers) * 100;
-    setRatio(calculatedRatio);
-    generateStudyPlan(calculatedRatio);
-  };
+  const calculateStudyPlan = () => {
+    setShowStudyTime(true);
 
-  const generateStudyPlan = (calculatedRatio) => {
-    let questionsToSolve;
-    if (calculatedRatio <= 25) {
-      questionsToSolve = 30;
-    } else if (calculatedRatio <= 50) {
-      questionsToSolve = 25;
-    } else {
-      questionsToSolve = 20;
-    }
+    const topics = selectedType === "TYT" ? tytTopics : aytTopics;
+    const plan = topics.map((topic) => {
+      const correct = Number(correctAnswers[topic] || 0);
+      const wrong = Number(wrongAnswers[topic] || 0);
+      const empty = Number(emptyAnswers[topic] || 0);
+      const total = correct + wrong + empty;
 
-    // Günün hangi gün olduğunu kontrol et
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0: Pazar, 1: Pazartesi, ..., 6: Cumartesi
-    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6; // Hafta sonu kontrolü
-
-    const plan = `
-      ${isWeekend ? "Hafta Sonu" : "Hafta İçi"}: 
-      ${
-        isWeekend
-          ? `10.00 - 12.00 Arası: 2 saat çalışma (45 dakika çalışma + 15 dakika mola)
-        12.00 - 13.00 Arası: 1 saat yemek molası
-        13.00 - 17.00 Arası: 3 saat çalışma (45 dakika çalışma + 15 dakika mola)
-        17.00 - 19.00 Arası: Yemek molası + dinlenme
-        19.00 - 22.00 Arası: 3 saat çalışma (45 dakika çalışma + 15 dakika mola)`
-          : `19.00 - 22.00 Arası Günlük Çalışma Programı:
-      Toplam 3 Saat  Çalışma Olacak:
-        - 45 Dakika Çalışma × 3
-        - 15 Dakika Mola × 3`
+      if (total === 0) {
+        return `${topic}: Hiç çözülmedi.`;
       }
-        - ${questionsToSolve} Soru Çözün
-        - Seçilen Konular: ${selectedTopics.join(", ")}
-    `;
-    setStudyPlan(plan);
+
+      const successRate = (correct / total) * 100;
+      let questionsToSolve;
+      if (successRate <= 25) {
+        questionsToSolve = 30;
+      } else if (successRate <= 50) {
+        questionsToSolve = 25;
+      } else {
+        questionsToSolve = 20;
+      }
+
+      return `${topic}: Başarı Oranı: ${successRate.toFixed(
+        2
+      )}%, Çözülecek Soru Sayısı: ${questionsToSolve}`;
+    });
+
+    setStudyPlan(plan.join("\n"));
+
+    // Çalışma programını oluştur
+    const scheduleText = isWeekend()
+      ? `Hafta Sonu Çalışma Programı:\n\n10.00 - 12.00 Arası: 2 saat çalışma (45 dakika çalışma + 15 dakika mola)\n12.00 - 13.00 Arası: 1 saat yemek molası\n13.00 - 17.00 Arası: 3 saat çalışma (45 dakika çalışma + 15 dakika mola)\n17.00 - 19.00 Arası: Yemek molası + dinlenme\n19.00 - 22.00 Arası: 3 saat çalışma (45 dakika çalışma + 15 dakika mola)`
+      : `Hafta İçi Çalışma Programı:\n\n19.00 - 22.00 Arası Günlük Çalışma Programı:\nToplam 3 Saat Çalışma Olacak:\n- 45 Dakika Çalışma × 3\n- 15 Dakika Mola × 3`;
+
+    setStudySchedule(scheduleText);
   };
 
-  const selectRandomTopics = (num, topicList) => {
-    const shuffled = topicList.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, num); // Rastgele seçilen konular
+  const handleInputChange = (setter, topic, value) => {
+    setter((prev) => ({
+      ...prev,
+      [topic]: value,
+    }));
   };
 
-  const handleTytClick = () => {
-    const topics = selectRandomTopics(3, tytTopics);
-    setSelectedTopics(topics);
-    setSelectedType("TYT"); // Seçilen türü TYT olarak ayarla
+  const isWeekend = () => {
+    const day = new Date().getDay();
+    return day === 0 || day === 6;
   };
 
-  const handleAytClick = () => {
-    const topics = selectRandomTopics(3, aytTopics);
-    setSelectedTopics(topics);
-    setSelectedType("AYT"); // Seçilen türü AYT olarak ayarla
+  const downloadSchedule = () => {
+    const combinedText = `${
+      isWeekend()
+        ? `Hafta Sonu Çalışma Programı:\n\n10.00 - 12.00 Arası: 2 saat çalışma (45 dakika çalışma + 15 dakika mola)\n12.00 - 13.00 Arası: 1 saat yemek molası\n13.00 - 17.00 Arası: 3 saat çalışma (45 dakika çalışma + 15 dakika mola)\n17.00 - 19.00 Arası: Yemek molası + dinlenme\n19.00 - 22.00 Arası: 3 saat çalışma (45 dakika çalışma + 15 dakika mola)`
+        : `Hafta İçi Çalışma Programı:\n\n19.00 - 22.00 Arası Günlük Çalışma Programı:\nToplam 3 Saat Çalışma Olacak:\n- 45 Dakika Çalışma × 3\n- 15 Dakika Mola × 3`
+    }\n\nÇalışma Planı:\n${studyPlan}`;
+
+    const element = document.createElement("a");
+    const file = new Blob([combinedText], { type: "text/plain" });
+    element.href = URL.createObjectURL(file);
+    element.download = "calisma_programi.txt";
+    document.body.appendChild(element);
+    element.click();
   };
 
   return (
     <div>
       <div className="container">
-        <h2>Doğru ve Yanlış Sayısını Girin</h2>
-        <input
-          type="number"
-          placeholder="Doğru Sayısı"
-          value={correctAnswers}
-          onChange={(e) => setCorrectAnswers(e.target.value)} // Değeri güncelle
-        />
-        <input
-          type="number"
-          placeholder="Yanlış Sayısı"
-          value={wrongAnswers}
-          onChange={(e) => setWrongAnswers(e.target.value)} // Değeri güncelle
-        />
+        <h2>{selectedType} Sınav Türünü Seç</h2>
+        {selectedType &&
+          (selectedType === "TYT" ? tytTopics : aytTopics).map((topic) => (
+            <div key={topic} className="topic-inputs">
+              <h3>{topic}</h3>
+              <input
+                type="number"
+                placeholder="Doğru"
+                value={correctAnswers[topic] || ""}
+                onChange={(e) =>
+                  handleInputChange(setCorrectAnswers, topic, e.target.value)
+                }
+              />
+              <input
+                type="number"
+                placeholder="Yanlış"
+                value={wrongAnswers[topic] || ""}
+                onChange={(e) =>
+                  handleInputChange(setWrongAnswers, topic, e.target.value)
+                }
+              />
+              <input
+                type="number"
+                placeholder="Boş"
+                value={emptyAnswers[topic] || ""}
+                onChange={(e) =>
+                  handleInputChange(setEmptyAnswers, topic, e.target.value)
+                }
+              />
+            </div>
+          ))}
 
         <div className="topic-buttons">
           <button
-            onClick={handleTytClick}
+            onClick={() => {
+              setSelectedType("TYT");
+              setShowStudyTime(false);
+            }}
             className={selectedType === "TYT" ? "selected" : ""}
           >
-            TYT Konuları
+            TYT
           </button>
           <button
-            onClick={handleAytClick}
+            onClick={() => {
+              setSelectedType("AYT");
+              setShowStudyTime(false);
+            }}
             className={selectedType === "AYT" ? "selected" : ""}
           >
-            AYT Konuları
+            AYT
           </button>
         </div>
 
-        <button onClick={calculateRatio} disabled={!selectedType}>
-          Hesapla
+        <button onClick={calculateStudyPlan} disabled={!selectedType}>
+          Çalışma Planını Oluştur
         </button>
 
-        {ratio !== null && (
+        {studyPlan && (
           <div className="result">
-            <h3>Oran: {ratio.toFixed(2)}%</h3>
-            <pre>{studyPlan}</pre>
+            {showStudyTime && (
+              <div className="study-time">
+                <h3>
+                  {isWeekend() ? "Hafta Sonu" : "Hafta İçi"} Çalışma Programı:
+                </h3>
+                <pre>
+                  {isWeekend()
+                    ? `10.00 - 12.00 Arası: 2 saat çalışma (45 dakika çalışma + 15 dakika mola)
+                  12.00 - 13.00 Arası: 1 saat yemek molası
+                  13.00 - 17.00 Arası: 3 saat çalışma (45 dakika çalışma + 15 dakika mola)
+                  17.00 - 19.00 Arası: Yemek molası + dinlenme
+                  19.00 - 22.00 Arası: 3 saat çalışma (45 dakika çalışma + 15 dakika mola)`
+                    : `19.00 - 22.00 Arası Günlük Çalışma Programı:
+Toplam 3 Saat Çalışma Olacak:
+- 45 Dakika Çalışma × 3
+- 15 Dakika Mola × 3`}
+                </pre>
+              </div>
+            )}
+            <h3>Çalışma Planı:</h3>
+            <pre>
+              {studyPlan.split("\n").map((line, index) => (
+                <span key={index}>
+                  {line
+                    .split(": ")
+                    .map((part, i) =>
+                      i === 0 ? <strong key={i}>{part}:</strong> : part
+                    )}
+                </span>
+              ))}
+            </pre>
+            <button onClick={downloadSchedule}>İndir</button>
           </div>
         )}
       </div>
